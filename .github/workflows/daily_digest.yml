@@ -25,6 +25,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           DESTINATION_EMAIL: ${{ secrets.DESTINATION_EMAIL }}
+          USER_PROFILE: ${{ secrets.USER_PROFILE }}
         run: cargo run
 
       - name: Persist State & Reports

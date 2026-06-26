@@ -2,7 +2,7 @@
 
 ![HABARI CLI Demo](assets/habari_cli_demo.png)
 
-Daily AI/ML news digest for developers. Pulls from arXiv and Hacker News, filters for relevance, dedupes, and summarizes with Gemini.
+Daily AI/ML intelligence digest for technical founders and builders. Pulls from arXiv and Hacker News, filters for relevance, dedupes, and uses Gemini to summarize technical shifts into practical build opportunities.
 
 ## Setup
 
@@ -10,7 +10,10 @@ Daily AI/ML news digest for developers. Pulls from arXiv and Hacker News, filter
 2. **Environment**: Create a `.env` file in the root directory:
    ```env
    GEMINI_API_KEY=your-key
+   USER_PROFILE=Technical founder, builder, and student focused on AI systems, developer tools, and fast prototypes
+   USER_PROFILE_PATH=profile/user_profile.md
    ```
+   `USER_PROFILE` is optional, but improves how the Application Radar scores opportunities against your background. For a richer profile, set `USER_PROFILE_PATH` to a local Markdown file; this takes priority over `USER_PROFILE`.
 
 ## Usage
 
@@ -32,6 +35,9 @@ To enable automation, go to your repository **Settings > Secrets and variables >
 - `GEMINI_API_KEY`: Your Google Gemini API Key.
 - `RESEND_API_KEY`: Your Resend API Key.
 - `DESTINATION_EMAIL`: The email address where you want to receive the digest.
+- `USER_PROFILE` (optional): A concise profile for Application Radar fit scoring during GitHub Actions runs.
+
+Local `profile/` files are ignored by Git. If you want the scheduled GitHub Action to use the same rich profile, paste a shorter version into the `USER_PROFILE` secret instead of committing personal profile files.
 
 # Build optimized release binary
 cargo build --release
@@ -42,7 +48,7 @@ cargo build --release
 1. Fetches latest papers from arXiv (cs.AI, cs.LG, cs.CL, cs.MA)
 2. Fetches top HN posts filtered by AI keywords concurrently
 3. Dedupes against SQLite store of seen items
-4. Gemini summarizes the top 15 items into a scannable digest
+4. Gemini summarizes the top items into a scannable digest with an Opportunity Radar for buildable wedges and an Application Radar for apply-to opportunities
 5. Marks items as seen to avoid repeats
 
 Data stored in `seen_items.db` (auto-created).

@@ -15,9 +15,11 @@ const HN_TOP_STORIES: &str = "https://hacker-news.firebaseio.com/v0/topstories.j
 const HN_KEYWORDS: &[&str] = &[
     "ai", "llm", "gpt", "claude", "agent", "ml", "transformer", "rag", 
     "anthropic", "openai", "reasoning", "model", "neural", "deep learning",
-    "inference", "cuda", "gpu", "mcp", "token"
+    "inference", "cuda", "gpu", "mcp", "token", "grant", "fellowship",
+    "accelerator", "hackathon", "residency", "scholarship", "startup school"
 ];
 const DEEP_DIVE_KEYWORDS: &[&str] = &["agent", "mcp", "memory", "context", "tool", "reasoning", "multi-agent"];
+const DEFAULT_USER_PROFILE: &str = "Technical founder, hands-on builder, and serious student of AI systems; interested in developer tools, applied AI research, fast prototypes, startup wedges, and opportunities that reward technical taste and shipping ability.";
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -298,14 +300,32 @@ async fn scout_hn(items: Vec<Item>) -> Result<ScoutReport, GenericError> {
     Ok(ScoutReport { source: "hn".into(), report })
 }
 
+fn load_user_profile() -> String {
+    if let Ok(path) = env::var("USER_PROFILE_PATH") {
+        let trimmed_path = path.trim();
+        if !trimmed_path.is_empty() {
+            if let Ok(contents) = std::fs::read_to_string(trimmed_path) {
+                let trimmed_contents = contents.trim();
+                if !trimmed_contents.is_empty() {
+                    return trimmed_contents.to_string();
+                }
+            }
+        }
+    }
+
+    env::var("USER_PROFILE").unwrap_or_else(|_| DEFAULT_USER_PROFILE.to_string())
+}
+
 async fn concierge_summarize(scout_reports: Vec<ScoutReport>, metadata: String) -> Result<String, GenericError> {
     let mut combined_reports = String::new();
     for r in scout_reports {
         combined_reports.push_str(&format!("--- REPORT FROM {} SCOUT ---\n{}\n\n", r.source.to_uppercase(), r.report));
     }
+    let user_profile = load_user_profile();
 
     let prompt = format!(
-        "You are the Lead Technical Concierge for a Senior AI Engineer and Founder. Your goal is to synthesize the following scout reports into a standard, high-signal daily digest.\n\n        You MUST follow this Markdown structure EXACTLY. Do not add extra sections or remove these headers.\n\n        # AI Research & Engineering Digest\n\n        ## 1. Executive Summary (The Pulse)\n        [A 2-3 sentence overview of today's technical atmosphere.]\n\n        ## 2. 🔥 The 1% Signal (Must-Read)\n        [Select the single most important item. Provide a deeply technical 3-4 sentence explanation of its architectural impact.]\n\n        ## 3. 💡 Founder's Corner (Opportunities)\n        [Highlight 2-3 specific technical gaps or builder opportunities. Frame them as 'Problem' and 'Opportunity'.]\n\n        ## 4. 🛠️ Technical Intelligence (Deep Dives)\n        [Thematic groupings of the remaining items. Group by technology stack or architectural layer.]\n\n        ## 5. 📊 System Metadata\n        {}\n\n        Scout Reports for Synthesis:\n{}",
+        "You are the Lead Technical Concierge for a technical founder, hands-on builder, and serious student of AI systems. Your goal is to synthesize the following scout reports into a high-signal daily digest that teaches, filters, and surfaces practical opportunities.\n\n        User Profile for fit scoring:\n        {}\n\n        Optimize for someone who wants to spot non-obvious technical wedges, build useful prototypes quickly, understand which AI changes create real leverage, and find external opportunities worth applying to.\n\n        You MUST follow this Markdown structure EXACTLY. Do not add extra sections or remove these headers.\n\n        # AI Research & Engineering Digest\n\n        ## 1. Executive Summary (The Pulse)\n        [A 2-3 sentence overview of today's technical atmosphere.]\n\n        ## 2. 🔥 The 1% Signal (Must-Read)\n        [Select the single most important item. Provide a deeply technical 3-4 sentence explanation of its architectural impact.]\n\n        ## 3. 🎯 Opportunity Radar (Buildable Wedges)\n        [Select exactly 3 opportunities for a technical founder/builder/student. Each opportunity MUST use this format:\n        - **Opportunity:** [A specific product, tool, workflow, or research prototype someone could build.]\n        - **Evidence:** [The paper, HN discussion, developer pain point, benchmark gap, or market signal that supports it.]\n        - **Why Now:** [What changed recently that makes this newly possible or urgent.]\n        - **Weekend Prototype:** [A concrete 1-2 day implementation plan with a narrow demo scope.]\n        - **Difficulty:** [Low, Medium, or High] **Leverage:** [Low, Medium, or High]\n        Prioritize ideas with credible demand, narrow scope, and a path to a demo. Avoid generic ideas like 'build a better AI model'.]\n\n        ## 4. 🧭 Application Radar (Apply-To Opportunities)\n        [Surface application-based opportunities such as accelerators, grants, fellowships, hackathons, residencies, scholarships, research programs, internships, jobs, pilot programs, beta programs, or open calls. Include only opportunities directly supported by the scout reports. If no credible apply-to opportunities surfaced today, say 'No strong apply-to opportunities surfaced today' and provide 2 specific search queries to monitor next.\n\n        For each opportunity, use this format:\n        - **Apply To:** [Name of the opportunity, organization, program, or opening.]\n        - **Fit Score:** [0-100] / 100\n        - **Why You Fit:** [Tie the opportunity to the User Profile. Be concrete.]\n        - **Gap/Risk:** [What might weaken the application or require more evidence.]\n        - **Next Step:** [One concrete action, such as draft an application angle, find deadline, build a portfolio demo, email an organizer, or bookmark the source.]\n        Rank by fit score, not prestige. Do not invent deadlines, eligibility, or application links if they are not present in the scout reports.]\n\n        ## 5. 🛠️ Technical Intelligence (Deep Dives)\n        [Thematic groupings of the remaining items. Group by technology stack or architectural layer.]\n\n        ## 6. 📊 System Metadata\n        {}\n\n        Scout Reports for Synthesis:\n{}",
+        user_profile,
         metadata,
         combined_reports
     );
