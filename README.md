@@ -10,6 +10,7 @@ Daily AI/ML intelligence digest for technical founders and builders. Pulls from 
 2. **Environment**: Create a `.env` file in the root directory:
    ```env
    GEMINI_API_KEY=your-key
+   GEMINI_MODEL=gemini-2.5-flash
    USER_PROFILE=Technical founder, builder, and student focused on AI systems, developer tools, and fast prototypes
    USER_PROFILE_PATH=profile/user_profile.md
    ```
@@ -33,6 +34,7 @@ This project is configured to run automatically every day at 13:00 UTC (08:00 ET
 ### Setup GitHub Secrets
 To enable automation, go to your repository **Settings > Secrets and variables > Actions** and add:
 - `GEMINI_API_KEY`: Your Google Gemini API Key.
+- `GEMINI_MODEL` (optional): Gemini model to use. Defaults to `gemini-2.5-flash`.
 - `RESEND_API_KEY`: Your Resend API Key.
 - `DESTINATION_EMAIL`: The email address where you want to receive the digest.
 - `USER_PROFILE` (optional): A concise profile for Application Radar fit scoring during GitHub Actions runs.

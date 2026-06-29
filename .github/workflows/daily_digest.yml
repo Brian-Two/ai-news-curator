@@ -23,6 +23,7 @@ jobs:
       - name: Run AI News Digest
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           DESTINATION_EMAIL: ${{ secrets.DESTINATION_EMAIL }}
           USER_PROFILE: ${{ secrets.USER_PROFILE }}

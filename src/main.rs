@@ -10,6 +10,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use colored::*;
 
 const DB_PATH: &str = "seen_items.db";
+const DEFAULT_GEMINI_MODEL: &str = "gemini-2.5-flash";
 const ARXIV_URL: &str = "http://export.arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.LG+OR+cat:cs.CL+OR+cat:cs.MA&sortBy=submittedDate&sortOrder=descending&max_results=30";
 const HN_TOP_STORIES: &str = "https://hacker-news.firebaseio.com/v0/topstories.json";
 const HN_KEYWORDS: &[&str] = &[
@@ -235,7 +236,12 @@ async fn fetch_hn(spinner: &ProgressBar) -> Result<Vec<Item>, GenericError> {
 
 async fn call_gemini(prompt: &str) -> Result<String, GenericError> {
     let api_key = env::var("GEMINI_API_KEY").expect("GEMINI_API_KEY must be set");
-    let url = format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={}", api_key);
+    let model = env::var("GEMINI_MODEL")
+        .unwrap_or_else(|_| DEFAULT_GEMINI_MODEL.to_string())
+        .trim()
+        .trim_start_matches("models/")
+        .to_string();
+    let url = format!("https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}", model, api_key);
 
     let body = serde_json::json!({
         "contents": [{
@@ -244,9 +250,19 @@ async fn call_gemini(prompt: &str) -> Result<String, GenericError> {
     });
 
     let client = reqwest::Client::new();
-    let resp = client.post(url).json(&body).send().await?.json::<serde_json::Value>().await?;
+    let resp = client.post(url).json(&body).send().await?;
+    let status = resp.status();
+    let response_body = resp.text().await?;
+    let json: serde_json::Value = serde_json::from_str(&response_body)?;
+
+    if !status.is_success() {
+        let message = json["error"]["message"]
+            .as_str()
+            .unwrap_or("Gemini request failed without an error message");
+        return Err(format!("Gemini API error for model {}: {}", model, message).into());
+    }
     
-    let text = resp["candidates"][0]["content"]["parts"][0]["text"]
+    let text = json["candidates"][0]["content"]["parts"][0]["text"]
         .as_str()
         .ok_or("Field 'text' not found in Gemini response")?
         .to_string();
